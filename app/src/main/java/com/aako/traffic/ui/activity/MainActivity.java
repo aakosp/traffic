@@ -1,18 +1,33 @@
 package com.aako.traffic.ui.activity;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
+import android.view.View;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
-
+import android.widget.Toast;
 import com.aako.traffic.R;
-
+import com.aako.traffic.log.FLog;
+import com.aako.traffic.ui.adapter.FeedAdapter;
+import com.aako.traffic.ui.view.FeedContextMenu;
+import com.aako.traffic.ui.view.FeedContextMenuManager;
+import com.aako.traffic.utils.Utils;
 import butterknife.InjectView;
+import butterknife.OnClick;
 
 /**
  * Created by aako on 2015/6/16.
  */
-public class MainActivity extends DrawerActivity {
+public class MainActivity extends DrawerActivity implements FeedAdapter.OnFeedItemClickListener,
+        FeedContextMenu.OnFeedContextMenuItemClickListener {
+
+    public static final String TAG = "MainActivity";
 
     public static final String ACTION_SHOW_LOADING_ITEM = "action_show_loading_item";
 
@@ -22,12 +37,18 @@ public class MainActivity extends DrawerActivity {
     @InjectView(R.id.rvFeed) RecyclerView rvFeed;
     @InjectView(R.id.btnCreate) ImageButton btnCreate;
 
+    private FeedAdapter feedAdapter;
+
+    private boolean pendingIntroAnimation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        FLog.d(TAG, "onCreate==================");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        FLog.d(TAG, "onCreate==================1111");
         setupFeed();
-
+        Toast.makeText(this, "aaaa", Toast.LENGTH_SHORT).show();
         if (savedInstanceState == null) {
             pendingIntroAnimation = true;
         } else {
@@ -53,5 +74,125 @@ public class MainActivity extends DrawerActivity {
                 FeedContextMenuManager.getInstance().onScrolled(recyclerView, dx, dy);
             }
         });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (ACTION_SHOW_LOADING_ITEM.equals(intent.getAction())) {
+            showFeedLoadingItemDelayed();
+        }
+    }
+
+    private void showFeedLoadingItemDelayed() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                rvFeed.smoothScrollToPosition(0);
+                feedAdapter.showLoadingView();
+            }
+        }, 500);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+        if (pendingIntroAnimation) {
+            pendingIntroAnimation = false;
+            startIntroAnimation();
+        }
+        return true;
+    }
+
+    private void startIntroAnimation() {
+        btnCreate.setTranslationY(2 * getResources().getDimensionPixelOffset(R.dimen.btn_fab_size));
+
+        int actionbarSize = Utils.dpToPx(56);
+        getToolbar().setTranslationY(-actionbarSize);
+        getIvLogo().setTranslationY(-actionbarSize);
+        getInboxMenuItem().getActionView().setTranslationY(-actionbarSize);
+
+        getToolbar().animate()
+                .translationY(0)
+                .setDuration(ANIM_DURATION_TOOLBAR)
+                .setStartDelay(300);
+        getIvLogo().animate()
+                .translationY(0)
+                .setDuration(ANIM_DURATION_TOOLBAR)
+                .setStartDelay(400);
+        getInboxMenuItem().getActionView().animate()
+                .translationY(0)
+                .setDuration(ANIM_DURATION_TOOLBAR)
+                .setStartDelay(500)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        startContentAnimation();
+                    }
+                })
+                .start();
+    }
+
+    private void startContentAnimation() {
+        btnCreate.animate()
+                .translationY(0)
+                .setInterpolator(new OvershootInterpolator(1.f))
+                .setStartDelay(300)
+                .setDuration(ANIM_DURATION_FAB)
+                .start();
+        feedAdapter.updateItems(true);
+    }
+
+    @Override
+    public void onCommentsClick(View v, int position) {
+        final Intent intent = new Intent(this, CommentsActivity.class);
+        int[] startingLocation = new int[2];
+        v.getLocationOnScreen(startingLocation);
+        intent.putExtra(CommentsActivity.ARG_DRAWING_START_LOCATION, startingLocation[1]);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
+
+    @Override
+    public void onMoreClick(View v, int itemPosition) {
+        FeedContextMenuManager.getInstance().toggleContextMenuFromView(v, itemPosition, this);
+    }
+
+    @Override
+    public void onProfileClick(View v) {
+        int[] startingLocation = new int[2];
+        v.getLocationOnScreen(startingLocation);
+        startingLocation[0] += v.getWidth() / 2;
+        UserProfileActivity.startUserProfileFromLocation(startingLocation, this);
+        overridePendingTransition(0, 0);
+    }
+
+    @Override
+    public void onReportClick(int feedItem) {
+        FeedContextMenuManager.getInstance().hideContextMenu();
+    }
+
+    @Override
+    public void onSharePhotoClick(int feedItem) {
+        FeedContextMenuManager.getInstance().hideContextMenu();
+    }
+
+    @Override
+    public void onCopyShareUrlClick(int feedItem) {
+        FeedContextMenuManager.getInstance().hideContextMenu();
+    }
+
+    @Override
+    public void onCancelClick(int feedItem) {
+        FeedContextMenuManager.getInstance().hideContextMenu();
+    }
+
+    @OnClick(R.id.btnCreate)
+    public void onTakePhotoClick() {
+//        int[] startingLocation = new int[2];
+//        btnCreate.getLocationOnScreen(startingLocation);
+//        startingLocation[0] += btnCreate.getWidth() / 2;
+//        TakePhotoActivity.startCameraFromLocation(startingLocation, this);
+//        overridePendingTransition(0, 0);
     }
 }

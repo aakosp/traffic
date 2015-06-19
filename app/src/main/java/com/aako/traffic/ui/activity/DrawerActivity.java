@@ -1,6 +1,5 @@
 package com.aako.traffic.ui.activity;
 
-import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.Toolbar;
@@ -10,26 +9,31 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import com.aako.traffic.R;
+import com.aako.traffic.log.FLog;
 import com.aako.traffic.ui.util.DrawerLayoutInstaller;
 import com.aako.traffic.ui.view.GlobalMenuView;
 import com.aako.traffic.utils.Utils;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.Optional;
 
 /**
  * Created by aako on 2015/6/16.
  */
 public class DrawerActivity extends BaseActionBarActivity implements GlobalMenuView.OnHeaderClickListener {
 
+    public static final String TAG = "DrawerActivity";
+    @Optional
     @InjectView(R.id.toolbar) Toolbar toolbar;
-    @InjectView(R.id.toolbar) ImageView ivLogo;
+    @Optional
+    @InjectView(R.id.ivLogo) ImageView ivLogo;
     private MenuItem inboxMenuItem;
     private DrawerLayout drawerLayout;
 
     @Override
     public void setContentView(int layoutResID) {
         super.setContentView(layoutResID);
-        setContentView(R.layout.activity_main);
+        FLog.d(TAG, "setContentView1111111111");
         ButterKnife.inject(this);
         setupToolbar();
         if (shouldInstallDrawer()) {
@@ -77,6 +81,7 @@ public class DrawerActivity extends BaseActionBarActivity implements GlobalMenuV
     }
 
     public ImageView getIvLogo() {
+        FLog.d(TAG, "logo : "+ ivLogo);
         return ivLogo;
     }
 

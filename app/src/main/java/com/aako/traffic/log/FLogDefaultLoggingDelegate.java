@@ -22,7 +22,7 @@ public class FLogDefaultLoggingDelegate implements LoggingDelegate {
   public static final FLogDefaultLoggingDelegate sInstance = new FLogDefaultLoggingDelegate();
 
   private String mApplicationTag = "unknown";
-  private int mMinimumLoggingLevel = Log.WARN;
+  private int mMinimumLoggingLevel = Log.DEBUG;
 
   public static FLogDefaultLoggingDelegate getInstance() {
     return sInstance;
